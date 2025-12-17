@@ -130,23 +130,47 @@ export const updateUserProfile = async (
   updates: Partial<User>
 ): Promise<void> => {
   try {
+    // First, update Firebase Auth (if needed)
+    if (auth.currentUser) {
+      // Update Firebase Auth display name if name/surname changed
+      if (updates.name !== undefined || updates.surname !== undefined) {
+        const currentUser = await getCurrentUser();
+        const newName = updates.name ?? currentUser?.name ?? '';
+        const newSurname = updates.surname ?? currentUser?.surname ?? '';
+        
+        await updateProfile(auth.currentUser, {
+          displayName: `${newName} ${newSurname}`,
+        });
+      }
+
+      // Update Firebase Auth email if changed
+      // Note: This may require recent authentication
+      if (updates.email && updates.email !== auth.currentUser.email) {
+        try {
+          await updateEmail(auth.currentUser, updates.email);
+        } catch (emailError: any) {
+          // If email update fails due to re-authentication requirement,
+          // still update Firestore and throw a helpful error
+          if (emailError.code === 'auth/requires-recent-login') {
+            console.warn('Email update requires re-authentication');
+            // Update Firestore anyway, but inform user
+            await updateDoc(doc(db, 'users', userId), {
+              ...updates,
+              updatedAt: new Date(),
+            });
+            throw new Error('Email update requires re-authentication. Please logout and login again to change your email.');
+          }
+          throw emailError;
+        }
+      }
+    }
+
+    // Update Firestore user document
     const userRef = doc(db, 'users', userId);
     await updateDoc(userRef, {
       ...updates,
       updatedAt: new Date(),
     });
-
-    // Update Firebase Auth email if changed
-    if (updates.email && auth.currentUser) {
-      await updateEmail(auth.currentUser, updates.email);
-    }
-
-    // Update Firebase Auth display name if name changed
-    if ((updates.name || updates.surname) && auth.currentUser) {
-      await updateProfile(auth.currentUser, {
-        displayName: `${updates.name} ${updates.surname}`,
-      });
-    }
   } catch (error: any) {
     throw new Error(error.message || 'Profile update failed');
   }
@@ -193,5 +217,46 @@ export const updateAddress = async (userId: string, address: Address): Promise<v
     });
   } catch (error: any) {
     throw new Error(error.message || 'Failed to update address');
+  }
+};
+
+/**
+ * Delete card details from user profile
+ */
+export const deleteCardDetails = async (userId: string, cardId: string): Promise<void> => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    const userData = userDoc.data() as User;
+
+    const updatedCards = (userData.cardDetails || []).filter((c) => c.id !== cardId);
+
+    await updateDoc(doc(db, 'users', userId), {
+      cardDetails: updatedCards,
+      updatedAt: new Date(),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to delete card');
+  }
+};
+
+/**
+ * Set default card
+ */
+export const setDefaultCard = async (userId: string, cardId: string): Promise<void> => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    const userData = userDoc.data() as User;
+
+    const updatedCards = (userData.cardDetails || []).map((c) => ({
+      ...c,
+      isDefault: c.id === cardId,
+    }));
+
+    await updateDoc(doc(db, 'users', userId), {
+      cardDetails: updatedCards,
+      updatedAt: new Date(),
+    });
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to set default card');
   }
 };
