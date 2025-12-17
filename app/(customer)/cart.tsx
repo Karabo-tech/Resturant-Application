@@ -32,6 +32,9 @@ export default function CartScreen() {
   const cartItems = cart?.items || [];
   const cartTotal = cart?.total || 0;
   const cartItemCount = cart?.itemCount || 0;
+  
+  const DELIVERY_FEE = 50; // R50 delivery fee
+  const totalWithDelivery = cartTotal + DELIVERY_FEE;
 
   const handleCheckout = () => {
     if (!user) {
@@ -132,12 +135,12 @@ export default function CartScreen() {
         </View>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Delivery Fee</Text>
-          <Text style={styles.summaryValue}>{formatCurrency(0)}</Text>
+          <Text style={styles.summaryValue}>{formatCurrency(DELIVERY_FEE)}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.summaryRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>{formatCurrency(cartTotal)}</Text>
+          <Text style={styles.totalValue}>{formatCurrency(totalWithDelivery)}</Text>
         </View>
 
         <Button
