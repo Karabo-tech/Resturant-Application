@@ -1,0 +1,177 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Cart, CartItem, FoodItem } from '@/types';
+
+interface CartContextType {
+  cart: Cart;
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (itemId: string) => void;
+  updateCartItem: (itemId: string, updates: Partial<CartItem>) => void;
+  clearCart: () => void;
+  getCartItemCount: () => number;
+  getCartTotal: () => number;
+}
+
+const CartContext = createContext<CartContextType | undefined>(undefined);
+
+const CART_STORAGE_KEY = '@restaurant_cart';
+
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [cart, setCart] = useState<Cart>({
+    items: [],
+    total: 0,
+    itemCount: 0,
+  });
+
+  // Load cart from storage on mount
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  // Save cart to storage whenever it changes
+  useEffect(() => {
+    saveCart();
+  }, [cart]);
+
+  const loadCart = async () => {
+    try {
+      const cartData = await AsyncStorage.getItem(CART_STORAGE_KEY);
+      if (cartData) {
+        setCart(JSON.parse(cartData));
+      }
+    } catch (error) {
+      console.error('Error loading cart:', error);
+    }
+  };
+
+  const saveCart = async () => {
+    try {
+      await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch (error) {
+      console.error('Error saving cart:', error);
+    }
+  };
+
+  const calculateSubtotal = (item: CartItem): number => {
+    let subtotal = item.foodItem.price;
+
+    // Add extras
+    item.selectedExtras.forEach((extraId) => {
+      const extra = item.foodItem.extras?.find((e) => e.id === extraId);
+      if (extra) {
+        subtotal += extra.price;
+      }
+    });
+
+    // Add drink if not included
+    if (item.selectedDrink) {
+      const drink = item.foodItem.drinkOptions?.find((d) => d.id === item.selectedDrink);
+      if (drink) {
+        subtotal += drink.price;
+      }
+    }
+
+    // Add ingredient additions
+    item.ingredientModifications.added.forEach((ingredientId) => {
+      const ingredient = item.foodItem.ingredients?.find((i) => i.id === ingredientId);
+      if (ingredient) {
+        subtotal += ingredient.price;
+      }
+    });
+
+    return subtotal * item.quantity;
+  };
+
+  const addToCart = (item: CartItem) => {
+    const itemWithSubtotal = {
+      ...item,
+      subtotal: calculateSubtotal(item),
+    };
+
+    setCart((prevCart) => {
+      const newItems = [...prevCart.items, itemWithSubtotal];
+      const newTotal = newItems.reduce((sum, item) => sum + item.subtotal, 0);
+      const newItemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
+
+      return {
+        items: newItems,
+        total: newTotal,
+        itemCount: newItemCount,
+      };
+    });
+  };
+
+  const removeFromCart = (itemId: string) => {
+    setCart((prevCart) => {
+      const newItems = prevCart.items.filter((item) => item.id !== itemId);
+      const newTotal = newItems.reduce((sum, item) => sum + item.subtotal, 0);
+      const newItemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
+
+      return {
+        items: newItems,
+        total: newTotal,
+        itemCount: newItemCount,
+      };
+    });
+  };
+
+  const updateCartItem = (itemId: string, updates: Partial<CartItem>) => {
+    setCart((prevCart) => {
+      const newItems = prevCart.items.map((item) => {
+        if (item.id === itemId) {
+          const updatedItem = { ...item, ...updates };
+          return {
+            ...updatedItem,
+            subtotal: calculateSubtotal(updatedItem),
+          };
+        }
+        return item;
+      });
+
+      const newTotal = newItems.reduce((sum, item) => sum + item.subtotal, 0);
+      const newItemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
+
+      return {
+        items: newItems,
+        total: newTotal,
+        itemCount: newItemCount,
+      };
+    });
+  };
+
+  const clearCart = () => {
+    setCart({
+      items: [],
+      total: 0,
+      itemCount: 0,
+    });
+  };
+
+  const getCartItemCount = () => cart.itemCount;
+
+  const getCartTotal = () => cart.total;
+
+  return (
+    <CartContext.Provider
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        updateCartItem,
+        clearCart,
+        getCartItemCount,
+        getCartTotal,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
+};
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};

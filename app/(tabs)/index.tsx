@@ -1,98 +1,260 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  RefreshControl,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { FoodItem, FoodCategory } from '@/types';
+import { getAllFoodItems } from '@/services/food.service';
+import { FoodCard } from '@/components/food/FoodCard';
+import { CategoryTab } from '@/components/food/CategoryTab';
+import { Loading } from '@/components/common/Loading';
+import { useCart } from '@/contexts/CartContext';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const categories: FoodCategory[] = [
+  'Burgers',
+  'Mains',
+  'Starters',
+  'Desserts',
+  'Beverages',
+  'Alcohols',
+];
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const { getCartItemCount } = useCart();
+  const [selectedCategory, setSelectedCategory] = useState<FoodCategory | 'All'>('All');
+  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<FoodItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    loadFoodItems();
+  }, []);
+
+  useEffect(() => {
+    filterItems();
+  }, [selectedCategory, foodItems]);
+
+  const loadFoodItems = async () => {
+    try {
+      const items = await getAllFoodItems();
+      setFoodItems(items);
+    } catch (error) {
+      console.error('Error loading food items:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const filterItems = () => {
+    if (selectedCategory === 'All') {
+      setFilteredItems(foodItems.filter((item) => item.available));
+    } else {
+      setFilteredItems(
+        foodItems.filter(
+          (item) => item.category === selectedCategory && item.available
+        )
+      );
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadFoodItems();
+  };
+
+  const handleItemPress = (itemId: string) => {
+    router.push(`/(customer)/item-detail?itemId=${itemId}`);
+  };
+
+  if (loading) {
+    return <Loading fullScreen message="Loading menu..." />;
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Welcome!</Text>
+          <Text style={styles.subtitle}>What would you like to order?</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.cartButton}
+          onPress={() => router.push('/(customer)/cart')}
+        >
+          <Ionicons name="cart-outline" size={28} color="#2D3748" />
+          {getCartItemCount() > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{getCartItemCount()}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity style={styles.searchBar}>
+        <Ionicons name="search-outline" size={20} color="#A0AEC0" />
+        <Text style={styles.searchPlaceholder}>Search for food...</Text>
+      </TouchableOpacity>
+
+      <View style={styles.categoriesSection}>
+        <Text style={styles.sectionTitle}>Categories</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+        >
+          <CategoryTab
+            category={'All' as FoodCategory}
+            isActive={selectedCategory === 'All'}
+            onPress={() => setSelectedCategory('All')}
+          />
+          {categories.map((category) => (
+            <CategoryTab
+              key={category}
+              category={category}
+              isActive={selectedCategory === category}
+              onPress={() => setSelectedCategory(category)}
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      <View style={styles.itemsSection}>
+        <Text style={styles.sectionTitle}>
+          {selectedCategory === 'All' ? 'All Items' : selectedCategory}
+        </Text>
+        <FlatList
+          data={filteredItems}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.itemsContainer}
+          renderItem={({ item }) => (
+            <FoodCard item={item} onPress={() => handleItemPress(item.id)} />
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="restaurant-outline" size={64} color="#CBD5E0" />
+              <Text style={styles.emptyStateText}>No items available</Text>
+            </View>
+          }
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#FF6B35"
+            />
+          }
+        />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#F7FAFC',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  greeting: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#2D3748',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#718096',
+    marginTop: 4,
+  },
+  cartButton: {
+    position: 'relative',
+    padding: 8,
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#FF6B35',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: '#FFFFFF',
+    margin: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  searchPlaceholder: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#A0AEC0',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  categoriesSection: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2D3748',
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  categoriesContainer: {
+    paddingHorizontal: 16,
+  },
+  itemsSection: {
+    flex: 1,
+    paddingTop: 16,
+  },
+  itemsContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  row: {
+    justifyContent: 'space-between',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#718096',
+    marginTop: 16,
   },
 });

@@ -1,112 +1,231 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card } from '@/components/common/Card';
+import { Button } from '@/components/common/Button';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+export default function ProfileScreen() {
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-export default function TabTwoScreen() {
+  const handleLogout = async () => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setLoading(true);
+            await logout();
+            router.replace('/(auth)/login');
+          } catch (error: any) {
+            Alert.alert('Error', error.message);
+          } finally {
+            setLoading(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.notLoggedIn}>
+          <Ionicons name="person-circle-outline" size={80} color="#CBD5E0" />
+          <Text style={styles.notLoggedInText}>You are not logged in</Text>
+          <Button
+            title="Sign In"
+            onPress={() => router.push('/(auth)/login')}
+            style={styles.signInButton}
+          />
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.header}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {user.name.charAt(0)}
+            {user.surname.charAt(0)}
+          </Text>
+        </View>
+        <Text style={styles.userName}>
+          {user.name} {user.surname}
+        </Text>
+        <Text style={styles.userEmail}>{user.email}</Text>
+      </View>
+
+      <Card>
+        <Text style={styles.cardTitle}>Contact Information</Text>
+        <View style={styles.infoRow}>
+          <Ionicons name="call-outline" size={20} color="#718096" />
+          <Text style={styles.infoText}>{user.phone}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Ionicons name="location-outline" size={20} color="#718096" />
+          <Text style={styles.infoText}>
+            {user.address.street}, {user.address.city}, {user.address.province},{' '}
+            {user.address.postalCode}
+          </Text>
+        </View>
+      </Card>
+
+      <Card>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Payment Methods</Text>
+          <TouchableOpacity>
+            <Ionicons name="add-circle-outline" size={24} color="#FF6B35" />
+          </TouchableOpacity>
+        </View>
+        {user.cardDetails?.map((card) => (
+          <View key={card.id} style={styles.cardItem}>
+            <Ionicons name="card-outline" size={20} color="#718096" />
+            <Text style={styles.cardText}>
+              •••• {card.cardNumber} {card.isDefault && '(Default)'}
+            </Text>
+          </View>
+        ))}
+      </Card>
+
+      <Card>
+        <Text style={styles.cardTitle}>Account</Text>
+        {user.role === 'admin' && (
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/(admin)/dashboard')}
+          >
+            <Ionicons name="stats-chart-outline" size={20} color="#718096" />
+            <Text style={styles.menuText}>Admin Dashboard</Text>
+            <Ionicons name="chevron-forward" size={20} color="#CBD5E0" />
+          </TouchableOpacity>
+        )}
+      </Card>
+
+      <Button
+        title="Logout"
+        onPress={handleLogout}
+        variant="danger"
+        loading={loading}
+        style={styles.logoutButton}
+      />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#F7FAFC',
   },
-  titleContainer: {
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  notLoggedIn: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  notLoggedInText: {
+    fontSize: 18,
+    color: '#718096',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  signInButton: {
+    width: 200,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarText: {
+    fontSize: 40,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2D3748',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#718096',
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2D3748',
+    marginBottom: 16,
+  },
+  cardHeader: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#4A5568',
+    marginLeft: 12,
+    flex: 1,
+  },
+  cardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  cardText: {
+    fontSize: 14,
+    color: '#4A5568',
+    marginLeft: 12,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  menuText: {
+    fontSize: 16,
+    color: '#2D3748',
+    marginLeft: 12,
+    flex: 1,
+  },
+  logoutButton: {
+    marginTop: 16,
   },
 });
