@@ -41,10 +41,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cartData = await AsyncStorage.getItem(CART_STORAGE_KEY);
       if (cartData) {
         const parsedCart = JSON.parse(cartData);
-        setCart(parsedCart);
+        // Validate the cart structure to ensure items is an array
+        if (parsedCart && Array.isArray(parsedCart.items)) {
+          setCart({
+            items: parsedCart.items,
+            total: parsedCart.total || 0,
+            itemCount: parsedCart.itemCount || 0,
+          });
+        } else {
+          // If the structure is invalid, reset to empty cart
+          console.warn('Invalid cart structure in storage, resetting cart');
+          setCart({
+            items: [],
+            total: 0,
+            itemCount: 0,
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading cart:', error);
+      // On error, ensure cart has valid structure
+      setCart({
+        items: [],
+        total: 0,
+        itemCount: 0,
+      });
     } finally {
       setIsLoaded(true);
     }
