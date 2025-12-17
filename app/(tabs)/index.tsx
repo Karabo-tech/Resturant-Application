@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +35,7 @@ export default function HomeScreen() {
   const [filteredItems, setFilteredItems] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadFoodItems();
@@ -41,7 +43,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     filterItems();
-  }, [selectedCategory, foodItems]);
+  }, [selectedCategory, foodItems, searchQuery]);
 
   const loadFoodItems = async () => {
     try {
@@ -56,15 +58,24 @@ export default function HomeScreen() {
   };
 
   const filterItems = () => {
-    if (selectedCategory === 'All') {
-      setFilteredItems(foodItems.filter((item) => item.available));
-    } else {
-      setFilteredItems(
-        foodItems.filter(
-          (item) => item.category === selectedCategory && item.available
-        )
+    let items = foodItems.filter((item) => item.available);
+    
+    // Filter by category
+    if (selectedCategory !== 'All') {
+      items = items.filter((item) => item.category === selectedCategory);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(query) ||
+          item.description.toLowerCase().includes(query)
       );
     }
+    
+    setFilteredItems(items);
   };
 
   const onRefresh = () => {
@@ -100,10 +111,21 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.searchBar}>
+      <View style={styles.searchBar}>
         <Ionicons name="search-outline" size={20} color="#A0AEC0" />
-        <Text style={styles.searchPlaceholder}>Search for food...</Text>
-      </TouchableOpacity>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search for food..."
+          placeholderTextColor="#A0AEC0"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={20} color="#A0AEC0" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       <View style={styles.categoriesSection}>
         <Text style={styles.sectionTitle}>Categories</Text>
@@ -216,10 +238,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  searchPlaceholder: {
+  searchInput: {
+    flex: 1,
     marginLeft: 8,
     fontSize: 16,
-    color: '#A0AEC0',
+    color: '#2D3748',
+    outlineStyle: 'none',
   },
   categoriesSection: {
     backgroundColor: '#FFFFFF',
