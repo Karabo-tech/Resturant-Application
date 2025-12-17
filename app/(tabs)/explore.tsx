@@ -10,33 +10,35 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            setLoading(true);
-            await logout();
-            router.replace('/(auth)/login');
-          } catch (error: any) {
-            Alert.alert('Error', error.message);
-          } finally {
-            setLoading(false);
-          }
-        },
-      },
-    ]);
+  const handleLogout = () => {
+    setShowLogoutDialog(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      setLoading(true);
+      await logout();
+      showToast('Logged out successfully', 'success');
+      setTimeout(() => {
+        router.replace('/(auth)/login');
+      }, 1000);
+    } catch (error: any) {
+      showToast(error.message || 'Failed to logout', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!user) {
@@ -122,6 +124,18 @@ export default function ProfileScreen() {
         variant="danger"
         loading={loading}
         style={styles.logoutButton}
+      />
+      
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        visible={showLogoutDialog}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        confirmColor="#E53E3E"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutDialog(false)}
       />
     </ScrollView>
   );

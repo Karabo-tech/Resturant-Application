@@ -180,6 +180,3 @@ For issues or questions:
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [React Native Documentation](https://reactnative.dev/)
 
----
-
-**Note:** This application requires proper Firebase configuration to function. Please follow the setup guide in SETUP.md for detailed instructions.
