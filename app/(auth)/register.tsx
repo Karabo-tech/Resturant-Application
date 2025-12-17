@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { registerSchema } from '@/utils/validation';
@@ -21,6 +22,7 @@ import { RegisterFormData } from '@/types';
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const {
@@ -35,11 +37,12 @@ export default function RegisterScreen() {
     try {
       setLoading(true);
       await register(data);
-      Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)') },
-      ]);
+      showToast('Account created successfully!', 'success');
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 1000);
     } catch (error: any) {
-      Alert.alert('Registration Failed', error.message || 'Please try again');
+      showToast(error.message || 'Registration failed. Please try again', 'error');
     } finally {
       setLoading(false);
     }

@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { loginSchema } from '@/utils/validation';
@@ -21,6 +22,7 @@ import { LoginFormData } from '@/types';
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const {
@@ -39,9 +41,12 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       await login(data);
-      router.replace('/(tabs)');
+      showToast('Login successful!', 'success');
+      setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 1000);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Please check your credentials');
+      showToast(error.message || 'Login failed. Please check your credentials', 'error');
     } finally {
       setLoading(false);
     }

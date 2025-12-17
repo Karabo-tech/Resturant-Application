@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { createOrder } from '@/services/order.service';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
@@ -21,6 +22,7 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(user?.address);
   const [selectedCard, setSelectedCard] = useState(
@@ -29,7 +31,7 @@ export default function CheckoutScreen() {
 
   const handlePlaceOrder = async () => {
     if (!user || !selectedAddress || !selectedCard) {
-      Alert.alert('Error', 'Please complete all required information');
+      showToast('Please complete all required information', 'error');
       return;
     }
 
@@ -53,21 +55,16 @@ export default function CheckoutScreen() {
 
       const orderId = await createOrder(orderData);
 
-      Alert.alert(
-        'Order Placed!',
-        `Your order #${orderId.slice(0, 8)} has been placed successfully.`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              clearCart();
-              router.replace('/(tabs)');
-            },
-          },
-        ]
-      );
+      // Show success toast
+      showToast(`Order #${orderId.slice(0, 8)} placed successfully! 🎉`, 'success', 4000);
+      
+      // Clear cart and navigate after a short delay to show the toast
+      setTimeout(() => {
+        clearCart();
+        router.replace('/(tabs)');
+      }, 2000);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to place order');
+      showToast(error.message || 'Failed to place order', 'error');
     } finally {
       setLoading(false);
     }

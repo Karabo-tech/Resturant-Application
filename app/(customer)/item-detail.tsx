@@ -14,6 +14,7 @@ import { FoodItem, CartItem } from '@/types';
 import { getFoodItemById } from '@/services/food.service';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { Button } from '@/components/common/Button';
 import { Loading } from '@/components/common/Loading';
 import { formatCurrency } from '@/utils/currency';
@@ -23,6 +24,7 @@ export default function ItemDetailScreen() {
   const { itemId } = useLocalSearchParams();
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const [item, setItem] = useState<FoodItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -128,10 +130,12 @@ export default function ItemDetailScreen() {
     };
 
     addToCart(cartItem);
-    Alert.alert('Success', 'Item added to cart!', [
-      { text: 'Continue Shopping', onPress: () => router.back() },
-      { text: 'View Cart', onPress: () => router.push('/(customer)/cart') },
-    ]);
+    showToast(`${item.name} added to cart!`, 'success');
+    
+    // Optional: Navigate after a short delay to show the toast
+    setTimeout(() => {
+      router.back();
+    }, 1000);
   };
 
   if (loading || !item) {
