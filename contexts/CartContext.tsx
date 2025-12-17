@@ -22,25 +22,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     total: 0,
     itemCount: 0,
   });
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load cart from storage on mount
   useEffect(() => {
     loadCart();
   }, []);
 
-  // Save cart to storage whenever it changes
+  // Save cart to storage whenever it changes (but only after initial load)
   useEffect(() => {
-    saveCart();
-  }, [cart]);
+    if (isLoaded) {
+      saveCart();
+    }
+  }, [cart, isLoaded]);
 
   const loadCart = async () => {
     try {
       const cartData = await AsyncStorage.getItem(CART_STORAGE_KEY);
       if (cartData) {
-        setCart(JSON.parse(cartData));
+        const parsedCart = JSON.parse(cartData);
+        setCart(parsedCart);
       }
     } catch (error) {
       console.error('Error loading cart:', error);
+    } finally {
+      setIsLoaded(true);
     }
   };
 
@@ -147,9 +153,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const getCartItemCount = () => cart.itemCount;
+  const getCartItemCount = () => {
+    if (!cart || !cart.items) return 0;
+    return cart.itemCount;
+  };
 
-  const getCartTotal = () => cart.total;
+  const getCartTotal = () => {
+    if (!cart) return 0;
+    return cart.total;
+  };
 
   return (
     <CartContext.Provider

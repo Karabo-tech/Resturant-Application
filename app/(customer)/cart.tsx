@@ -20,6 +20,11 @@ export default function CartScreen() {
   const { cart, removeFromCart, updateCartItem, clearCart } = useCart();
   const { user } = useAuth();
 
+  // Safe check for cart items
+  const cartItems = cart?.items || [];
+  const cartTotal = cart?.total || 0;
+  const cartItemCount = cart?.itemCount || 0;
+
   const handleCheckout = () => {
     if (!user) {
       Alert.alert(
@@ -33,7 +38,7 @@ export default function CartScreen() {
       return;
     }
 
-    if (cart.items.length === 0) {
+    if (cartItems.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to your cart first');
       return;
     }
@@ -63,7 +68,7 @@ export default function CartScreen() {
     ]);
   };
 
-  if (cart.items.length === 0) {
+  if (cartItems.length === 0) {
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="cart-outline" size={100} color="#CBD5E0" />
@@ -95,7 +100,7 @@ export default function CartScreen() {
 
       {/* Cart Items */}
       <FlatList
-        data={cart.items}
+        data={cartItems}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
@@ -117,7 +122,7 @@ export default function CartScreen() {
       <View style={styles.summary}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Subtotal</Text>
-          <Text style={styles.summaryValue}>{formatCurrency(cart.total)}</Text>
+          <Text style={styles.summaryValue}>{formatCurrency(cartTotal)}</Text>
         </View>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Delivery Fee</Text>
@@ -126,11 +131,11 @@ export default function CartScreen() {
         <View style={styles.divider} />
         <View style={styles.summaryRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>{formatCurrency(cart.total)}</Text>
+          <Text style={styles.totalValue}>{formatCurrency(cartTotal)}</Text>
         </View>
 
         <Button
-          title={`Checkout (${cart.itemCount} items)`}
+          title={`Checkout (${cartItemCount} items)`}
           onPress={handleCheckout}
           style={styles.checkoutButton}
         />
