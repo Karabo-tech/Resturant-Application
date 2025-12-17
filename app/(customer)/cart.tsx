@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,14 +11,21 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { CartItemCard } from '@/components/cart/CartItemCard';
 import { Button } from '@/components/common/Button';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { formatCurrency } from '@/utils/currency';
 
 export default function CartScreen() {
   const router = useRouter();
   const { cart, removeFromCart, updateCartItem, clearCart } = useCart();
   const { user } = useAuth();
+  const { showToast } = useToast();
+  
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState<string | null>(null);
 
   // Safe check for cart items
   const cartItems = cart?.items || [];
@@ -47,25 +54,25 @@ export default function CartScreen() {
   };
 
   const handleClearCart = () => {
-    Alert.alert('Clear Cart', 'Are you sure you want to clear your cart?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Clear',
-        style: 'destructive',
-        onPress: clearCart,
-      },
-    ]);
+    setShowClearDialog(true);
+  };
+  
+  const confirmClearCart = () => {
+    clearCart();
+    showToast('Cart cleared successfully', 'success');
   };
 
   const handleRemoveItem = (itemId: string) => {
-    Alert.alert('Remove Item', 'Remove this item from cart?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => removeFromCart(itemId),
-      },
-    ]);
+    setItemToRemove(itemId);
+    setShowRemoveDialog(true);
+  };
+  
+  const confirmRemoveItem = () => {
+    if (itemToRemove) {
+      removeFromCart(itemToRemove);
+      showToast('Item removed from cart', 'success');
+      setItemToRemove(null);
+    }
   };
 
   if (cartItems.length === 0) {
@@ -140,6 +147,32 @@ export default function CartScreen() {
           style={styles.checkoutButton}
         />
       </View>
+      
+      {/* Confirmation Dialogs */}
+      <ConfirmDialog
+        visible={showClearDialog}
+        title="Clear Cart"
+        message="Are you sure you want to clear your cart? This action cannot be undone."
+        confirmText="Clear"
+        cancelText="Cancel"
+        confirmColor="#E53E3E"
+        onConfirm={confirmClearCart}
+        onCancel={() => setShowClearDialog(false)}
+      />
+      
+      <ConfirmDialog
+        visible={showRemoveDialog}
+        title="Remove Item"
+        message="Remove this item from your cart?"
+        confirmText="Remove"
+        cancelText="Cancel"
+        confirmColor="#E53E3E"
+        onConfirm={confirmRemoveItem}
+        onCancel={() => {
+          setShowRemoveDialog(false);
+          setItemToRemove(null);
+        }}
+      />
     </View>
   );
 }

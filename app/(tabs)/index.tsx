@@ -263,6 +263,7 @@ const styles = StyleSheet.create({
   itemsSection: {
     flex: 1,
     paddingTop: 16,
+    minHeight: 0,
   },
   itemsContainer: {
     paddingHorizontal: 16,
