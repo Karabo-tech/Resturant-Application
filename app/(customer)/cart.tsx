@@ -25,6 +25,7 @@ export default function CartScreen() {
   
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
 
   // Safe check for cart items
@@ -34,23 +35,21 @@ export default function CartScreen() {
 
   const handleCheckout = () => {
     if (!user) {
-      Alert.alert(
-        'Login Required',
-        'You need to be logged in to checkout. Would you like to login or continue as guest?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Login', onPress: () => router.push('/(auth)/login') },
-        ]
-      );
+      showToast('Please login to proceed with checkout', 'warning');
+      setShowLoginDialog(true);
       return;
     }
 
     if (cartItems.length === 0) {
-      Alert.alert('Empty Cart', 'Please add items to your cart first');
+      showToast('Your cart is empty', 'error');
       return;
     }
 
     router.push('/(customer)/checkout');
+  };
+
+  const handleLoginRedirect = () => {
+    router.push('/(auth)/login');
   };
 
   const handleClearCart = () => {
@@ -172,6 +171,17 @@ export default function CartScreen() {
           setShowRemoveDialog(false);
           setItemToRemove(null);
         }}
+      />
+      
+      <ConfirmDialog
+        visible={showLoginDialog}
+        title="Login Required"
+        message="You need to be logged in to proceed with checkout. Would you like to login now?"
+        confirmText="Login"
+        cancelText="Cancel"
+        confirmColor="#FF6B35"
+        onConfirm={handleLoginRedirect}
+        onCancel={() => setShowLoginDialog(false)}
       />
     </View>
   );

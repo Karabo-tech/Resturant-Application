@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,13 @@ export default function CheckoutScreen() {
   const [selectedCard, setSelectedCard] = useState(
     user?.cardDetails?.find((card) => card.isDefault) || user?.cardDetails?.[0]
   );
+
+  // Show toast when user is not logged in
+  useEffect(() => {
+    if (!user) {
+      showToast('Please login to checkout', 'warning', 3000);
+    }
+  }, [user]);
 
   const handlePlaceOrder = async () => {
     if (!user || !selectedAddress || !selectedCard) {
@@ -73,7 +80,26 @@ export default function CheckoutScreen() {
   if (!user) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Please login to checkout</Text>
+        <View style={styles.notLoggedInContainer}>
+          <Ionicons name="lock-closed-outline" size={80} color="#CBD5E0" />
+          <Text style={styles.notLoggedInTitle}>Login Required</Text>
+          <Text style={styles.notLoggedInText}>
+            You need to be logged in to proceed with checkout
+          </Text>
+          <Button
+            title="Login"
+            onPress={() => router.push('/(auth)/login')}
+            style={styles.loginButton}
+          />
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/register')}
+            style={styles.registerLink}
+          >
+            <Text style={styles.registerLinkText}>
+              Don't have an account? <Text style={styles.registerLinkBold}>Register</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -179,11 +205,41 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#2D3748',
   },
-  errorText: {
+  notLoggedInContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  notLoggedInTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2D3748',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  notLoggedInText: {
     fontSize: 16,
-    color: '#E53E3E',
+    color: '#718096',
     textAlign: 'center',
-    marginTop: 40,
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  loginButton: {
+    width: '100%',
+    maxWidth: 300,
+    marginBottom: 16,
+  },
+  registerLink: {
+    paddingVertical: 8,
+  },
+  registerLinkText: {
+    fontSize: 14,
+    color: '#718096',
+  },
+  registerLinkBold: {
+    fontWeight: '600',
+    color: '#FF6B35',
   },
   cardHeader: {
     flexDirection: 'row',

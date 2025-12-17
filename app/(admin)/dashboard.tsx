@@ -112,7 +112,10 @@ export default function AdminDashboardScreen() {
           <Ionicons name="chevron-forward" size={24} color="#CBD5E0" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionItem}>
+        <TouchableOpacity
+          style={styles.actionItem}
+          onPress={() => router.push('/(admin)/analytics')}
+        >
           <Ionicons name="bar-chart-outline" size={24} color="#FF6B35" />
           <Text style={styles.actionText}>View Analytics</Text>
           <Ionicons name="chevron-forward" size={24} color="#CBD5E0" />
