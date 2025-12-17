@@ -4,14 +4,14 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 // Firebase configuration
-// TODO: Replace with your Firebase project configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyD_rZDojJbK7qB02dQwcoFs0vmpOAFOv5E",
+  authDomain: "resturant-e152a.firebaseapp.com",
+  projectId: "resturant-e152a",
+  storageBucket: "resturant-e152a.firebasestorage.app",
+  messagingSenderId: "80834731560",
+  appId: "1:80834731560:web:45562303764ece13129f1d",
+  measurementId: "G-T85WSPPDSY"
 };
 
 // Initialize Firebase
