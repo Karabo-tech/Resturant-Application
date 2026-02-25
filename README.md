@@ -72,7 +72,6 @@ ResturantApplication/
    npm run web     # Run on web
    ```
 
-📖 **Detailed setup instructions available in [SETUP.md](./SETUP.md)**
 
 ## 🎨 Design
 
@@ -125,12 +124,6 @@ The app uses **South African Rand (ZAR)** with the `R` symbol for all pricing.
   "typescript": "~5.9.2"
 }
 ```
-
-## 📚 Documentation
-
-- [Setup Guide](./SETUP.md) - Detailed setup and configuration
-- [Project Summary](./PROJECT_SUMMARY.md) - Complete feature list
-- [Command Instructions](./command.md) - Project requirements
 
 ## 🧪 Testing
 
