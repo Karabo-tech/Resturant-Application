@@ -11,7 +11,7 @@ A modern, full-featured React Native restaurant ordering application built with 
 
 #### You can download and install the latest Android APK directly from Google Drive:
 
-# 👉 [Download Audio Recording Journal App](https://drive.google.com/file/d/1dvLDo7JZFqpg_rhwefjnHnCAL8yKcGOs/view?usp=sharing)
+# 👉 [Download Audio Recording Journal App]([https://drive.google.com/file/d/1dvLDo7JZFqpg_rhwefjnHnCAL8yKcGOs/view?usp=sharing](https://drive.google.com/file/d/1qFO-AxBaxYdWMnnoixteuiZtOn8qceo3/view?usp=sharing))
 
 - Installation Notes
 - Enable “Install unknown apps” on your Android device if prompted
