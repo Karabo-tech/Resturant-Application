@@ -7,6 +7,18 @@ A modern, full-featured React Native restaurant ordering application built with 
 ![TypeScript](https://img.shields.io/badge/TypeScript-~5.9.2-blue)
 ![Firebase](https://img.shields.io/badge/Firebase-10.13.0-orange)
 
+## 📦 Download APK (Android)
+
+#### You can download and install the latest Android APK directly from Google Drive:
+
+# 👉 [Download Audio Recording Journal App](https://drive.google.com/file/d/1dvLDo7JZFqpg_rhwefjnHnCAL8yKcGOs/view?usp=sharing)
+
+- Installation Notes
+- Enable “Install unknown apps” on your Android device if prompted
+- This APK is for educational/demo purposes
+- The app works fully offline once installed
+- Microphone permission is required for recording
+
 ## 📱 Features
 
 ### Customer Features
